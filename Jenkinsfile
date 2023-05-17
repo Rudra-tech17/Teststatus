@@ -14,7 +14,7 @@ pipeline {
         }
       }
     }
-    stage('build womething') {
+    stage('build something') {
       when {
         branch 'develop'
       }
