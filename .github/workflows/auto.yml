@@ -2,23 +2,26 @@ name: Cherry-pick and Squash Commits
 
 on:
   repository_dispatch:
-    types: [ "event-triggered-by-jira" ]
+    types: [event-triggered-by-jira]
 
 jobs:
   cherry-pick-and-squash-commits:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
       - name: Extract Issue Key and Commit Hash
         id: extract_issue_key
         run: |
           echo "Issue Key: ${{ github.event.client_payload.jira-issue }}"
           issue_id="${{ github.event.client_payload.jira-issue }}"
           echo "::set-output name=issue_id::$issue_id"
-        
+
       - name: Trigger Cherry-pick Workflow
         uses: Rudra-tech17/ticket-automation/.github/workflows/auto.yml@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: cherry-pick-triggered
-          client-payload: '{"jira-issue":"${{ github.event.client_payload.jira-issue }}"}'
+          client-payload: '{"jira-issue":"${{ steps.extract_issue_key.outputs.issue_id }}"}'
