@@ -9,9 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
       - name: Extract Issue Key and Commit Hash
         id: extract_issue_key
         run: |
@@ -19,64 +16,10 @@ jobs:
           issue_id="${{ github.event.client_payload.jira-issue }}"
           echo "::set-output name=issue_id::$issue_id"
         
-      - name: Set Git Config
-        run: |
-          git config user.name "Rudra"
-          git config user.email "rudrakvh17@gmail.com"
-
-
-      - name: Create Branch
-        run: |
-          git status
-          branch_name=cherrypick/${{ github.event.client_payload.jira-issue }}
-          git checkout -b $branch_name
-
-      - name: Filter Commits with Issue ID
-        id: filter_commits
-        run: |
-          issue_key=${{ github.event.client_payload.jira-issue }}
-          branch_name=cherrypick/${{ github.event.client_payload.jira-issue }}
-          echo "Issue Key: $issue_key"
-          git fetch --all
-          git checkout develop
-          commit_hashes=$(git log --grep="$issue_key" --format=%H)
-          echo "Commit Hashes: $commit_hashes"
-          echo "::set-output name=commit_hashes::$commit_hashes"
-          git checkout $branch_name
-
-      - name: Squash Commits
-        id: squash_commits
-        run: |
-          commit_hashes="${{ steps.filter_commits.outputs.commit_hashes }}"
-          git merge --squash $commit_hashes
-          git commit --message="Squashed Commits"
-          squash_commit_hash=$(git rev-parse HEAD)
-          echo "Squash Commit Hash: $squash_commit_hash"
-          echo "::set-output name=squash_commit_hash::$squash_commit_hash"
-
-      - name: Cherry-pick Squashed Commit
-        id: cherry_pick_squashed_commit
-        run: |
-          git status
-          squash_commit_hash="${{ steps.squash_commits.outputs.squash_commit_hash }}"
-          git cherry-pick $squash_commit_hash
-          git cherry-pick --continue
-
-      - name: Push Branch
-        run: |
-          branch_name=cherrypick/${{ github.event.client_payload.jira-issue }}
-          git push --set-upstream origin $branch_name
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+      - name: Trigger Cherry-pick Workflow
+        uses: Rudra-tech17/ticket-automation@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Cherry-pick and Squash Commits"
-          title: "Cherry-pick and Squash Commits for ${{ github.event.client_payload.jira-issue }}"
-          body: |
-            This pull request contains the cherry-picked and squashed commits for Jira issue ${{ github.event.client_payload.jira-issue }}.
-          branch: cherrypick/${{ github.event.client_payload.jira-issue }}
-          base: master
-          draft: false
+          event-type: cherry-pick-triggered
+          client-payload: '{"jira-issue":"${{ github.event.client_payload.jira-issue }}"}'
+          echo "Jira-issue": $jira-issue"
