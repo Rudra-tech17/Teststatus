@@ -17,9 +17,8 @@ jobs:
           echo "::set-output name=issue_id::$issue_id"
         
       - name: Trigger Cherry-pick Workflow
-        uses: Rudra-tech17/ticket-automation@v1
+        uses: Rudra-tech17/ticket-automation/.github/workflows/auto.yml@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: cherry-pick-triggered
           client-payload: '{"jira-issue":"${{ github.event.client_payload.jira-issue }}"}'
-          echo "Jira-issue": $jira-issue"
